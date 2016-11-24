@@ -1,24 +1,53 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace ServerPOC
 {
     class LineBufferedClient
     {
-        public LineBufferedClient(TcpClient client) {
+        public LineBufferedClient(TcpClient client, ClientManager clientManager) {
             ReadBuffer = new byte[256];
             CurrentLine = new StringBuilder();
             Client = client;
+            Stream = new StreamReader(client.GetStream());
+            ClientManager = clientManager;            
         }
 
         public TcpClient Client { get; private set; }
         public Byte[] ReadBuffer { get; private set; }
         public StringBuilder CurrentLine { get; set; }
+        public StreamReader Stream { get; set; }
+        public ClientManager ClientManager { get; set; }
+
+        public void HandleLine(Task<string> input)
+        {
+            try
+            {
+                var received = input.Result;
+                if (null == received)
+                {
+                    Console.WriteLine("Disconnected");
+                    ClientManager.RemoveClient(this);
+                }
+                else
+                {
+                    ClientManager.SendToAllBut(this, received);
+                    Stream.ReadLineAsync().ContinueWith(HandleLine);
+                }
+            }
+            catch (AggregateException)
+            {
+                Console.WriteLine("Disconnected!");
+                ClientManager.RemoveClient(this);
+            }
+        }
     }
 
     class ClientManager
@@ -27,17 +56,17 @@ namespace ServerPOC
 
         public void Add(TcpClient tcpClient)
         {
-            var client = new LineBufferedClient(tcpClient);
-
-            var result = tcpClient.GetStream().BeginRead(client.ReadBuffer, 0, client.ReadBuffer.Length, DataReceived, client);
+            var client = new LineBufferedClient(tcpClient, this);
 
             if (!_clients.TryAdd(client, client))
             {
                 throw new InvalidOperationException("Tried to add connection twice");
             }
+
+            client.Stream.ReadLineAsync().ContinueWith(client.HandleLine);
         }
 
-        private void HandleCompleteLine(LineBufferedClient client, string line)
+        public void SendToAllBut(LineBufferedClient client, string line)
         {
             Console.WriteLine(line);
             Thread.Sleep(2000);
@@ -59,58 +88,8 @@ namespace ServerPOC
             }
         }
 
-        private void DataReceived(IAsyncResult ar)
-        {
-            var client = ar.AsyncState as LineBufferedClient;
 
-            var bytesRead = client.Client.GetStream().EndRead(ar);
-
-            if(bytesRead > 0)
-            {
-                var readString = Encoding.UTF8.GetString(client.ReadBuffer, 0, bytesRead);
-
-                while(readString.Contains("\n"))
-                {
-                    var indexOfNewLine = readString.IndexOf('\n');
-                    var left = readString.Substring(0, indexOfNewLine);
-                    client.CurrentLine.Append(left);
-
-                    var line = client.CurrentLine.ToString();
-
-                    client.CurrentLine.Clear();
-                    if(indexOfNewLine != readString.Length-1)
-                    {
-                        readString = readString.Substring(indexOfNewLine + 1);
-                    }
-                    else
-                    {
-                        readString = string.Empty;
-                    }
-
-                    HandleCompleteLine(client, line);
-                }
-
-                if(!string.IsNullOrEmpty(readString))
-                {
-                    client.CurrentLine.Append(readString);
-                }
-
-                try
-                {
-                    client.Client.GetStream().BeginRead(client.ReadBuffer, 0, 256, DataReceived, client);
-                }
-                catch (Exception ex) when (ex is InvalidOperationException || ex is System.IO.IOException)
-                {
-                    RemoveClient(client);
-                }
-            }
-            else
-            {
-                RemoveClient(client);
-            }
-        }
-
-        private void RemoveClient(LineBufferedClient client)
+        public void RemoveClient(LineBufferedClient client)
         {
             LineBufferedClient ignored;
             _clients.TryRemove(client, out ignored);
