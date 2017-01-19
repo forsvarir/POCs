@@ -1,0 +1,14 @@
+﻿<Window x:Class="BookManager.Views.Book.ViewBook"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BookManager.Views.Book"
+        mc:Ignorable="d"
+        Title="ViewBook" Height="300" Width="300">
+    <Grid>
+        <Label x:Name="label" Content="Title" HorizontalAlignment="Left" Margin="25,41,0,0" VerticalAlignment="Top"/>
+        <TextBlock x:Name="txtTitle" HorizontalAlignment="Left" Margin="139,46,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Width="125"/>
+
+    </Grid>
+</Window>

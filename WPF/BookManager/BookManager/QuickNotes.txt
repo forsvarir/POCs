@@ -1,0 +1,35 @@
+﻿Enable-Migrations
+Add-Migration Url
+Update-Database
+
+Author
+    AuthorId
+    Name
+    
+Location
+    LocationId
+    QuickName
+    Room
+    Shelf
+
+Publisher
+    PublisherId
+    Name
+    Location
+
+Book
+    BookId
+    Title
+    PublishedYear
+    PublisherId
+
+BookLocation
+    BookId
+    LocationId
+
+Image
+    ImageId
+    ImageData
+    ?Name?
+
+
