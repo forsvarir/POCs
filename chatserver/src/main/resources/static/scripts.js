@@ -21,6 +21,15 @@ function connect() {
         stompClient.subscribe('/topic/greetings', function (greeting) {
             showMessage(JSON.parse(greeting.body).content);
         });
+        // Connect
+        stompClient.subscribe('/user/queue/reply', function(connectionDetails) {
+            connectionId = JSON.parse(connectionDetails.body).connectionId;
+            showMessage('connected: ' + connectionId);
+            stompClient.subscribe('/queue/' + connectionId, function(greeting) {
+                showMessage(JSON.parse(greeting.body).content);
+            });
+        });
+        stompClient.send("/app/connect", {}, JSON.stringify({'message': 'connect'}));
     });
 }
 

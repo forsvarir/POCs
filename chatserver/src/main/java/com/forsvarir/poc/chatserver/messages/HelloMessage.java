@@ -1,4 +1,4 @@
-package com.forsvarir.poc.chatserver;
+package com.forsvarir.poc.chatserver.messages;
 
 public class HelloMessage {
 

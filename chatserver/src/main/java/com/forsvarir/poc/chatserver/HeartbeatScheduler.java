@@ -1,5 +1,6 @@
 package com.forsvarir.poc.chatserver;
 
+import com.forsvarir.poc.chatserver.messages.Greeting;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -17,7 +18,7 @@ public class HeartbeatScheduler {
 
     @PostConstruct
     public void scheduleHeartbeatMessage() {
-        taskScheduler.scheduleAtFixedRate(new HeartbeatTask("2 second heartbeat", messagingTemplate), 2000);
+        taskScheduler.scheduleAtFixedRate(new HeartbeatTask("60 second heartbeat", messagingTemplate), 60 * 1000);
     }
 
     class HeartbeatTask implements Runnable {
