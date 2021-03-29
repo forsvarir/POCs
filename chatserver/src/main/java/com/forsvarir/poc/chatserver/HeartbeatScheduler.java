@@ -33,7 +33,7 @@ public class HeartbeatScheduler {
         @Override
         public void run() {
             System.out.println("Runnable Task with " + message + " on thread " + Thread.currentThread().getName());
-            messagingTemplate.convertAndSend("/topic/greetings", "{\"content\": \"" + message + "\"}");
+            messagingTemplate.convertAndSend("/topic/greetings", new Greeting(message));
         }
     }
 }
