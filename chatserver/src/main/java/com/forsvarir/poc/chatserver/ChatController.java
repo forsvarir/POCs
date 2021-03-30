@@ -11,6 +11,7 @@ import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.util.HtmlUtils;
 
+import java.security.Principal;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
@@ -26,11 +27,12 @@ public class ChatController {
 
     @MessageMapping("/connect")
     @SendToUser("/queue/reply")
-    public StatusMessage connect(ConnectMessage connectMessage) throws Exception {
+    public StatusMessage connect(ConnectMessage connectMessage, Principal principal) throws Exception {
         int userId = connectionId++;
         sessions.put(connectMessage.getUser(), userId);
 
         logger.info("User Connected: " + connectMessage.getUser() + " as " + userId);
+        logger.info("Principal:" + principal.getName());
 
         return new StatusMessage(userId);
     }
