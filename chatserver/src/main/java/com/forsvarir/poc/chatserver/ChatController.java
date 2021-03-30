@@ -11,25 +11,35 @@ import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.util.HtmlUtils;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
+
 @Controller()
 public class ChatController {
     static int connectionId = 0;
+    static ConcurrentHashMap<String, Integer> sessions = new ConcurrentHashMap<String, Integer>();
+
+    Logger logger = Logger.getLogger(ChatController.class.getName());
 
     @Autowired
     SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/connect")
     @SendToUser("/queue/reply")
-    public StatusMessage connect(ConnectMessage message) throws Exception {
-        return new StatusMessage(connectionId++);
+    public StatusMessage connect(ConnectMessage connectMessage) throws Exception {
+        int userId = connectionId++;
+        sessions.put(connectMessage.getUser(), userId);
+
+        logger.info("User Connected: " + connectMessage.getUser() + " as " + userId);
+
+        return new StatusMessage(userId);
     }
 
     @MessageMapping("/message")
-//    @SendTo("/topic/greetings")
     public void greeting(HelloMessage message) throws Exception {
         if (message.getMessage().contains(":")) {
             var tokens = message.getMessage().split(":");
-            final String userTargetAddress = "/queue/" + tokens[0];
+            final String userTargetAddress = "/queue/" + sessions.get(tokens[0]);
             messagingTemplate.convertAndSend(userTargetAddress, new Greeting(HtmlUtils.htmlEscape(message.getMessage())));
         } else {
             messagingTemplate.convertAndSend("/topic/greetings", new Greeting(HtmlUtils.htmlEscape(message.getMessage())));

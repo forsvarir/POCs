@@ -29,7 +29,7 @@ function connect() {
                 showMessage(JSON.parse(greeting.body).content);
             });
         });
-        stompClient.send("/app/connect", {}, JSON.stringify({'message': 'connect'}));
+        stompClient.send("/app/connect", {}, JSON.stringify({'user': $('#user').val()}));
     });
 }
 
